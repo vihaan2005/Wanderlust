@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const express = require("express");
 const app = express();
-app.set('trust proxy', 1); // ← Fix 1: Trust Render's reverse proxy
+app.set('trust proxy', 1);
 
 const mongoose = require("mongoose");
 const path = require("path");
@@ -17,6 +17,7 @@ const MongoStore = require('connect-mongo');
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("./models/user.js");
 
 const dbUrl = process.env.ATLAS_DB_URL;
@@ -47,9 +48,9 @@ const sessionOptions = {
     store,
     secret: process.env.SECRET,
     resave: false,
-    saveUninitialized: false, // changed to false
+    saveUninitialized: false,
     cookie: {
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // ← Fix 2: wrapped in new Date()
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production'
@@ -62,7 +63,34 @@ app.use(flash());
 // Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Local Strategy
 passport.use(new LocalStrategy(User.authenticate()));
+
+// Google Strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "https://majorproject1-0yb3.onrender.com/auth/google/callback"
+},
+async (accessToken, refreshToken, profile, done) => {
+    try {
+        let user = await User.findOne({ googleId: profile.id });
+        if (!user) {
+            user = new User({
+                googleId: profile.id,
+                username: profile.displayName,
+                email: profile.emails[0].value,
+                profilePhoto: profile.photos[0].value
+            });
+            await user.save();
+        }
+        return done(null, user);
+    } catch (err) {
+        return done(err, null);
+    }
+}));
+
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
