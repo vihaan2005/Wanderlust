@@ -1,9 +1,9 @@
-
-    require('dotenv').config();
-
+require('dotenv').config();
 
 const express = require("express");
 const app = express();
+app.set('trust proxy', 1); // ← Fix 1: Trust Render's reverse proxy
+
 const mongoose = require("mongoose");
 const path = require("path");
 const methodOverride = require("method-override");
@@ -47,12 +47,12 @@ const sessionOptions = {
     store,
     secret: process.env.SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // changed to false
     cookie: {
-        expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // ← Fix 2: wrapped in new Date()
         maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'  // HTTPS only in prod ✅
+        secure: process.env.NODE_ENV === 'production'
     }
 };
 
@@ -79,7 +79,7 @@ app.use("/listings", listingRouter);
 app.use("/listings/:id/reviews", reviewRouter);
 app.use("/", userRouter);
 
-// 404 handler ✅
+// 404 handler
 app.all("*", (req, res, next) => {
     next(new ExpressError(404, "Page not found"));
 });
@@ -90,20 +90,20 @@ app.use((err, req, res, next) => {
     res.status(statusCode).render("listings/error.ejs", { message });
 });
 
-// MongoDB connection (moved here, proper error handling) ✅
+// MongoDB connection
 async function main() {
     try {
         await mongoose.connect(dbUrl);
         console.log("✅ MongoDB connected");
     } catch (err) {
         console.error("❌ MongoDB connection error:", err);
-        process.exit(1);  // Fail fast in production
+        process.exit(1);
     }
 }
 
-// Start server ✅ Render-ready
+// Start server
 const port = process.env.PORT || 8080;
 app.listen(port, '0.0.0.0', () => {
     console.log(`✅ Server listening on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
-    main();  // Connect DB after server starts
+    main();
 });
