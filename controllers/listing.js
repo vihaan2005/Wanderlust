@@ -4,7 +4,7 @@ module.exports.index = async (req, res) => {
   const { search } = req.query;
   let allListings;
   if (search) {
-    const searchRegex = new RegExp(search, "i"); // case insensitive
+    const searchRegex = new RegExp(search, "i");
     allListings = await Listing.find({
       $or: [
         { title: searchRegex },
