@@ -1,8 +1,21 @@
 const Listing = require("../models/listing.js");
 
 module.exports.index = async (req, res) => {
-  const allListings = await Listing.find({});
-  res.render("listings/index.ejs", { allListings });
+  const { search } = req.query;
+  let allListings;
+  if (search) {
+    const searchRegex = new RegExp(search, "i"); // case insensitive
+    allListings = await Listing.find({
+      $or: [
+        { title: searchRegex },
+        { location: searchRegex },
+        { country: searchRegex }
+      ]
+    });
+  } else {
+    allListings = await Listing.find({});
+  }
+  res.render("listings/index.ejs", { allListings, search: search || "" });
 };
 
 module.exports.renderNewForm = async (req, res) => {
@@ -39,9 +52,9 @@ module.exports.editListing = async (req, res) => {
     req.flash("error", "Listing Does Not Exist");
     return res.redirect("/listings");
   }
-  let originalImageUrl=listing.image.url;
-  originalImageUrl=originalImageUrl.replace("/upload","/upload/w_250")
-  res.render("listings/edit.ejs", { listing, originalImageUrl});
+  let originalImageUrl = listing.image.url;
+  originalImageUrl = originalImageUrl.replace("/upload", "/upload/w_250");
+  res.render("listings/edit.ejs", { listing, originalImageUrl });
 };
 
 module.exports.updateListing = async (req, res) => {
@@ -53,7 +66,6 @@ module.exports.updateListing = async (req, res) => {
     listing.image = { url, filename };
     await listing.save();
   }
-
   req.flash("success", "Listing Updated");
   res.redirect(`/listings/${id}`);
 };

@@ -18,10 +18,10 @@
   .filter p {
     font-size: 0.8rem;
   }
-  .tax-info{
+  .tax-info {
     display: none;
   }
-  .tax-toggle{
+  .tax-toggle {
     border: 1px solid black;
     border-radius: 1rem;
     height: 3rem;
@@ -30,7 +30,64 @@
     display: flex;
     align-items: center;
   }
+  .search-bar {
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem 0 1rem 0;
+  }
+  .search-bar input {
+    width: 50%;
+    border-radius: 2rem 0 0 2rem;
+    border: 1px solid #ccc;
+    padding: 0.5rem 1rem;
+    outline: none;
+    font-size: 1rem;
+  }
+  .search-bar button {
+    border-radius: 0 2rem 2rem 0;
+    border: 1px solid #ccc;
+    border-left: none;
+    padding: 0.5rem 1.2rem;
+    background: #fe424d;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .search-bar button:hover {
+    background: #e0333d;
+  }
+  .clear-search {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
 </style>
+
+<!-- Search Bar -->
+<div class="search-bar">
+  <form action="/listings" method="get" style="display: flex; width: 100%; justify-content: center;">
+    <input
+      type="text"
+      name="search"
+      placeholder="Search by title, location or country..."
+      value="<%= search %>"
+    />
+    <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+  </form>
+</div>
+
+<!-- Clear search button -->
+<% if(search){ %>
+  <div class="clear-search">
+    <a href="/listings" class="btn btn-outline-secondary btn-sm">
+      <i class="fa-solid fa-x"></i> Clear Search
+    </a>
+    <span class="ms-3 text-muted">
+      Showing results for "<b><%= search %></b>"
+    </span>
+  </div>
+<% } %>
+
 <div id="filters">
   <div class="filter">
     <div><i class="fa-solid fa-fire"></i></div>
@@ -76,7 +133,7 @@
     <div><i class="fa-solid fa-ship"></i></div>
     <p>Boats</p>
   </div>
-   <div class="filter">
+  <div class="filter">
     <div><i class="fa-solid fa-umbrella-beach"></i></div>
     <p>Beach</p>
   </div>
@@ -88,49 +145,54 @@
         role="switch"
         id="switchCheckDefault"
       />
-      <label class="form-check-label" for="switchCheckDefault"
-        >Display After Taxes</label
-      >
+      <label class="form-check-label" for="switchCheckDefault">Display After Taxes</label>
     </div>
   </div>
 </div>
-<div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 mt-3">
-  <% for(listing of allListings){%>
-  <a href="/listings/<%= listing._id %>" class="listing-link">
-    <div class="card listing-card">
-      <img
-        src="<%= listing.image.url %>"
-        class="card-img-top"
-        alt="listing-img"
-        style="height: 20rem"
-      />
-      <div class="card-img-overlay"></div>
-      <div class="card-body">
-        <p class="card-text">
-          <b><%= listing.title %></b>
-          <br />
-          &#8377;<%= listing.price.toLocaleString("en-IN") %>/night
-          <i class="tax-info"> &nbsp;&nbsp; +18% GST</i>
-        </p>
-      </div>
-    </div>
-  </a>
 
-  <% } %>
-</div>
+<!-- Listings Grid -->
+<% if(allListings.length === 0){ %>
+  <div class="text-center mt-5">
+    <i class="fa-solid fa-magnifying-glass fa-2x text-muted"></i>
+    <p class="mt-3 text-muted">No listings found for "<b><%= search %></b>"</p>
+    <a href="/listings" class="btn btn-success mt-2">View All Listings</a>
+  </div>
+<% } else { %>
+  <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 mt-3">
+    <% for(listing of allListings){ %>
+      <a href="/listings/<%= listing._id %>" class="listing-link">
+        <div class="card listing-card">
+          <img
+            src="<%= listing.image.url %>"
+            class="card-img-top"
+            alt="listing-img"
+            style="height: 20rem"
+          />
+          <div class="card-img-overlay"></div>
+          <div class="card-body">
+            <p class="card-text">
+              <b><%= listing.title %></b>
+              <br />
+              &#8377;<%= listing.price.toLocaleString("en-IN") %>/night
+              <i class="tax-info"> &nbsp;&nbsp; +18% GST</i>
+            </p>
+          </div>
+        </div>
+      </a>
+    <% } %>
+  </div>
+<% } %>
 
 <script>
-  let taxSwitch=document.getElementById("switchCheckDefault");
-  taxSwitch.addEventListener("click",()=>{
-    let taxInfo=document.getElementsByClassName("tax-info");
-    for(info of taxInfo){
-      if(info.style.display!="inline"){
-         info.style.display="inline";
+  let taxSwitch = document.getElementById("switchCheckDefault");
+  taxSwitch.addEventListener("click", () => {
+    let taxInfo = document.getElementsByClassName("tax-info");
+    for (info of taxInfo) {
+      if (info.style.display != "inline") {
+        info.style.display = "inline";
+      } else {
+        info.style.display = "none";
       }
-      else{
-        info.style.display="none"
-      }
-      
     }
   });
 </script>
